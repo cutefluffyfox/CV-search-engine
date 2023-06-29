@@ -13,6 +13,12 @@ def preprocessing(**context):
     context["ti"].xcom_push(key="some_key", value=a)
 
 
+def another_function(**context):
+    kek = 123123123123
+
+    logging.info("Kek: " + str(kek))
+
+
 def core_nlp(**context):
     a = context["ti"].xcom_pull(key="some_key")
     a += 1

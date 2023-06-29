@@ -17,6 +17,11 @@ with DAG(
         python_callable=preprocessing
     )
 
+    another_task = PythonOperator(
+        task_id='another_task',
+        python_callable=another_function
+    )
+
     core_nlp_task = PythonOperator(
         task_id='core_nlp',
         python_callable=core_nlp
@@ -27,5 +32,5 @@ with DAG(
         python_callable=postprocessing
     )
 
-preprocessing_task >> core_nlp_task >> postprocessing_task
+preprocessing_task >> another_task >> core_nlp_task >> postprocessing_task
 
