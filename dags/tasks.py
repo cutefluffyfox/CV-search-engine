@@ -23,7 +23,7 @@ def vectorization(**context):
     cv_vecs = [Vector(cv['id'], cv['text']) for cv in cvs]
 
     context['ti'].xcom_push(key='prompt_vec', value=prompt_vec)
-    context['ti'].xcom_puch(key='cv_vecs', value=cv_vecs)
+    context['ti'].xcom_push(key='cv_vecs', value=cv_vecs)
 
 
 def sorting(**context):
