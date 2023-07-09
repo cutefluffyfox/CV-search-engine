@@ -1,7 +1,8 @@
 import logging
-import pandas as pd
-from random import random
-import pika
+
+from vectorizer import Vector
+from sorter import CVSorter
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,18 +15,22 @@ def preprocessing(**context):
     context["ti"].xcom_push(key="some_key", value=a)
 
 
-def core_nlp(**context):
-    a = context["ti"].xcom_pull(key="some_key")
+def vectorization(**context):
+    prompt: str = context['ti'].xcom_pull(key='prompt')
+    cvs: list[dict] = context['ti'].xcom_pull(key="cvs")  # list[dict{id, text}]
 
-    logging.info(f"The value of a is {a}")
+    prompt_vec = Vector(-1, prompt)
+    cv_vecs = [Vector(cv['id'], cv['text']) for cv in cvs]
 
-    context["ti"].xcom_push(key="some_key", value=a)
+    context['ti'].xcom_push(key='prompt_vec', value=prompt_vec)
+    context['ti'].xcom_push(key='cv_vecs', value=cv_vecs)
 
 
-def postprocessing(**context):
-    logging.info('Started score calculation')
-    df = pd.read_csv('data/Resume/Resume.csv')
-    ids = [{'id': rid, 'score': random()} for rid in df['ID'].to_list()]
-    ids.sort(key=lambda r: r['score'], reverse=True)
-    context["ti"].xcom_push(key="cvs", value=ids)
+def sorting(**context):
+    prompt_vec: Vector = context['ti'].xcom_pull(key='prompt_vec')
+    cv_vecs: list[Vector] = context['ti'].xcom_pull(key='cv_vecs')
 
+    sorter = CVSorter(prompt_vec, cv_vecs)
+    metadata = sorter.get_sorted_metadata()
+
+    context['ti'].xcom_puch(key='cvs', value=metadata)
