@@ -19,18 +19,13 @@ with DAG(
 
     nlp_vectorization_task = PythonOperator(
         task_id='nlp_vectorization',
-        python_callable=nlp_vectorization_task
+        python_callable=vectorization
     )
 
-    core_nlp_task = PythonOperator(
-        task_id='core_nlp',
-        python_callable=core_nlp
+    sorting_task = PythonOperator(
+        task_id='sorting',
+        python_callable=sorting
     )
 
-    postprocessing_task = PythonOperator(
-        task_id='postprocessing',
-        python_callable=postprocessing
-    )
-
-preprocessing_task >> nlp_vectorization_task >> core_nlp_task >> postprocessing_task
+preprocessing_task >> nlp_vectorization_task >> sorting_task
 
