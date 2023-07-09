@@ -17,6 +17,11 @@ with DAG(
         python_callable=preprocessing
     )
 
+    nlp_vectorization_task = PythonOperator(
+        task_id='nlp_vectorization',
+        python_callable=nlp_vectorization_task
+    )
+
     core_nlp_task = PythonOperator(
         task_id='core_nlp',
         python_callable=core_nlp
@@ -27,5 +32,5 @@ with DAG(
         python_callable=postprocessing
     )
 
-preprocessing_task >> core_nlp_task >> postprocessing_task
+preprocessing_task >> nlp_vectorization_task >> core_nlp_task >> postprocessing_task
 
