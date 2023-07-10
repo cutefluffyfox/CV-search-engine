@@ -1,5 +1,6 @@
 import gensim
 import string
+import numpy as np
 from sentence_transformers import SentenceTransformer
 
 
@@ -56,6 +57,21 @@ class Vector:
 
     def get_words_embeddings(self) -> tuple[list[str], list]:
         return self.__get_words_embedding(self.resume_str)
+
+    def to_dict(self) -> dict:
+        as_dict = self.__dict__
+        as_dict['cv_vector'] = as_dict['cv_vector'].tolist()
+        return as_dict
+
+    @staticmethod
+    def from_dict(**kwargs):
+        vec = Vector(kwargs['resume_id'], kwargs['resume_str'])
+        vec.cv_vector = np.array(kwargs['cv_vector'])
+        return vec
+
+    @staticmethod
+    def parse_iterative(*args) -> list:
+        return [Vector.from_dict(**val) for val in args]
 
     def category_split(self):  # TODO: split text into (skills, education & work experience)
         pass
