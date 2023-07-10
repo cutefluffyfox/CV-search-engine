@@ -19,16 +19,16 @@ def vectorization(**context):
     prompt: str = context['ti'].xcom_pull(key='prompt')
     cvs: list[dict] = context['ti'].xcom_pull(key="cvs")  # list[dict{id, text}]
 
-    prompt_vec = Vector(-1, prompt)
-    cv_vecs = [Vector(cv['id'], cv['text']) for cv in cvs]
+    prompt_vec = Vector(-1, prompt).to_dict()
+    cv_vecs = [Vector(cv['id'], cv['text']).to_dict() for cv in cvs]
 
     context['ti'].xcom_push(key='prompt_vec', value=prompt_vec)
     context['ti'].xcom_push(key='cv_vecs', value=cv_vecs)
 
 
 def sorting(**context):
-    prompt_vec: Vector = context['ti'].xcom_pull(key='prompt_vec')
-    cv_vecs: list[Vector] = context['ti'].xcom_pull(key='cv_vecs')
+    prompt_vec: Vector = Vector.from_dict(**context['ti'].xcom_pull(key='prompt_vec'))
+    cv_vecs: list[Vector] = Vector.parse_iterative(context['ti'].xcom_pull(key='cv_vecs'))
 
     sorter = CVSorter(prompt_vec, cv_vecs)
     metadata = sorter.get_sorted_metadata()

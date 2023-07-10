@@ -57,5 +57,18 @@ class Vector:
     def get_words_embeddings(self) -> tuple[list[str], list]:
         return self.__get_words_embedding(self.resume_str)
 
+    def to_dict(self) -> dict:
+        return self.__dict__
+
+    @staticmethod
+    def from_dict(**kwargs):
+        vec = Vector(kwargs['resume_id'], kwargs['resume_str'])
+        vec.cv_vector = kwargs['cv_vector']
+        return vec
+
+    @staticmethod
+    def parse_iterative(*args) -> list:
+        return [Vector.from_dict(**val) for val in args]
+
     def category_split(self):  # TODO: split text into (skills, education & work experience)
         pass
