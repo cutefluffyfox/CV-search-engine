@@ -1,8 +1,12 @@
+import json
+import threading
+import torch
+from typing import List, Tuple
+
 import gensim
 import string
 import numpy as np
 from sentence_transformers import SentenceTransformer
-
 
 # check model name at official Transformers website:
 # https://www.sbert.net/docs/pretrained_models.html
@@ -25,17 +29,36 @@ class Vector:
 
     @staticmethod
     def __get_sentence_embedding(sentence: str) -> list or None:
+        global cv
+        def bert_encode(sentence, tmp):
+            global cv
+            count = len(sentence)//8
+            start = tmp * count
+            end = len(sentence) if tmp==7 else (tmp + 1)*count
+            a = model.encode([sentence[start:end]])[0] if sentence else None
+            cv = cv + a if len(cv)!=0 else a
+            return a
+        
         sentence = sentence.translate(translator)
+        threads = []
         if isinstance(model, SentenceTransformer):
-            return model.encode([sentence])[0] if sentence else None
+            for i in range(8):
+                thread = threading.Thread(target=bert_encode, args=(sentence, i, ))
+                thread.start()
+                threads.append(thread)
+            for thread in threads:
+                thread.join()
+            self.cv_vector = cv
+            print(self.cv_vector)
         elif isinstance(model, gensim.models.keyedvectors.KeyedVectors):
             words = sentence.split()
-            return model.get_mean_vector(words, ignore_missing=True, post_normalize=False) if words else None
+            self.cv_vector = model.get_mean_vector(words, ignore_missing=True, post_normalize=False) if words else None
+            return 
         else:
             raise NotImplementedError('Non-gensim and non-bert models are not supported')
 
     @staticmethod
-    def __get_words_embedding(sentence: str) -> tuple[list[str], list]:
+    def __get_words_embedding(sentence: str) -> Tuple[List[str], List]:
         words = sentence.translate(translator).split()
         if isinstance(model, SentenceTransformer):
             word_embeddings = model.encode(words)
@@ -47,19 +70,21 @@ class Vector:
             return words, word_embeddings
         else:
             raise NotImplementedError('Non-gensim and non-bert models are not supported')
-
+    
     @staticmethod
     def __get_word_embedding(word: str):
         return Vector.__get_words_embedding(word)[1][0]
 
     def preprocess(self):
-        self.cv_vector = self.__get_sentence_embedding(self.resume_str)
-
-    def get_words_embeddings(self) -> tuple[list[str], list]:
+        self.__get_sentence_embedding(self.resume_str)
+        
+    def get_words_embeddings(self) -> Tuple[List[str], List]:
         return self.__get_words_embedding(self.resume_str)
 
     def to_dict(self) -> dict:
         as_dict = self.__dict__
+        if isinstance(as_dict['cv_vector'], list):
+            return as_dict
         as_dict['cv_vector'] = as_dict['cv_vector'].tolist()
         return as_dict
 
@@ -71,7 +96,14 @@ class Vector:
 
     @staticmethod
     def parse_iterative(*args) -> list:
-        return [Vector.from_dict(**val) for val in args]
+        return [Vector.from_dict(**val) for val in args[0]]
 
     def category_split(self):  # TODO: split text into (skills, education & work experience)
         pass
+
+    def get_cv_vector(self):
+
+        return [self.resume_id, self.cv_vector.tolist()]
+
+    def to_json(self):
+        return json.dumps(self.get_cv_vector())
