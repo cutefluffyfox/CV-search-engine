@@ -1,6 +1,8 @@
 import logging
 
-import pika
+from vectorizer import Vector
+from sorter import CVSorter
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -13,20 +15,22 @@ def preprocessing(**context):
     context["ti"].xcom_push(key="some_key", value=a)
 
 
-def core_nlp(**context):
-    a = context["ti"].xcom_pull(key="some_key")
-    a += 1
+def vectorization(**context):
+    prompt: str = context['ti'].xcom_pull(key='prompt')
+    cvs: list[dict] = context['ti'].xcom_pull(key="cvs")  # list[dict{id, text}]
 
-    logging.info(f"The value of a is {a}")
+    prompt_vec = Vector(-1, prompt).to_dict()
+    cv_vecs = [Vector(cv['id'], cv['text']).to_dict() for cv in cvs]
 
-    context["ti"].xcom_push(key="some_key", value=a)
+    context['ti'].xcom_push(key='prompt_vec', value=prompt_vec)
+    context['ti'].xcom_push(key='cv_vecs', value=cv_vecs)
 
 
-def postprocessing(**context):
-    a = context["ti"].xcom_pull(key="some_key")
-    a += 1
+def sorting(**context):
+    prompt_vec: Vector = Vector.from_dict(**context['ti'].xcom_pull(key='prompt_vec'))
+    cv_vecs: list[Vector] = Vector.parse_iterative(context['ti'].xcom_pull(key='cv_vecs'))
 
-    logging.info(f"The value of a is {a}")
+    sorter = CVSorter(prompt_vec, cv_vecs)
+    metadata = sorter.get_sorted_metadata()
 
-    context["ti"].xcom_push(key="some_key", value=a)
-
+    context['ti'].xcom_puch(key='cvs', value=metadata)

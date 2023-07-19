@@ -17,15 +17,15 @@ with DAG(
         python_callable=preprocessing
     )
 
-    core_nlp_task = PythonOperator(
-        task_id='core_nlp',
-        python_callable=core_nlp
+    nlp_vectorization_task = PythonOperator(
+        task_id='nlp_vectorization',
+        python_callable=vectorization
     )
 
-    postprocessing_task = PythonOperator(
-        task_id='postprocessing',
-        python_callable=postprocessing
+    sorting_task = PythonOperator(
+        task_id='sorting',
+        python_callable=sorting
     )
 
-preprocessing_task >> core_nlp_task >> postprocessing_task
+preprocessing_task >> nlp_vectorization_task >> sorting_task
 
