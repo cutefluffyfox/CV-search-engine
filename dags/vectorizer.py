@@ -1,3 +1,6 @@
+import json
+from typing import List, Tuple
+
 import gensim
 import string
 import numpy as np
@@ -25,17 +28,22 @@ class Vector:
 
     @staticmethod
     def __get_sentence_embedding(sentence: str) -> list or None:
+        print("vectorizer: here 1")
         sentence = sentence.translate(translator)
+        print("Sentence: " + str(sentence))
+        print("vectorizer: here 2")
         if isinstance(model, SentenceTransformer):
+            print("vectorizer: here 3")
             return model.encode([sentence])[0] if sentence else None
         elif isinstance(model, gensim.models.keyedvectors.KeyedVectors):
+            print("vectorizer: here 4")
             words = sentence.split()
             return model.get_mean_vector(words, ignore_missing=True, post_normalize=False) if words else None
         else:
             raise NotImplementedError('Non-gensim and non-bert models are not supported')
 
     @staticmethod
-    def __get_words_embedding(sentence: str) -> tuple[list[str], list]:
+    def __get_words_embedding(sentence: str) -> Tuple[List[str], List]:
         words = sentence.translate(translator).split()
         if isinstance(model, SentenceTransformer):
             word_embeddings = model.encode(words)
@@ -55,7 +63,7 @@ class Vector:
     def preprocess(self):
         self.cv_vector = self.__get_sentence_embedding(self.resume_str)
 
-    def get_words_embeddings(self) -> tuple[list[str], list]:
+    def get_words_embeddings(self) -> Tuple[List[str], List]:
         return self.__get_words_embedding(self.resume_str)
 
     def to_dict(self) -> dict:
@@ -70,8 +78,14 @@ class Vector:
         return vec
 
     @staticmethod
-    def parse_iterative(*args) -> list:
+    def parse_iterative(args) -> list:
         return [Vector.from_dict(**val) for val in args]
 
     def category_split(self):  # TODO: split text into (skills, education & work experience)
         pass
+
+    def get_cv_vector(self):
+        return [self.resume_id, self.cv_vector.tolist()]
+
+    def to_json(self):
+        return json.dumps(self.get_cv_vector())

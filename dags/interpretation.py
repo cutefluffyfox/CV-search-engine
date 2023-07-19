@@ -1,3 +1,7 @@
+from typing import Dict
+from typing import Tuple
+from typing import List
+
 from vectorizer import Vector
 from metrics import cosine_similarity
 
@@ -16,17 +20,17 @@ class InterpretableVector:
         self.cache_importance = cache_importance
         self.metadata = metadata  # dict{id, score}
 
-    def analyze_word_importance(self) -> dict[str, float]:
+    def analyze_word_importance(self) -> Dict[str, float]:
         words, embeddings = self.resume.get_words_embeddings()
         importance = self.importance if self.cache_importance else dict()
         for word, emb in zip(words, embeddings):
             importance[word] = cosine_similarity(self.prompt.cv_vector, emb)
         return importance
 
-    def get_sorted_words(self) -> list[tuple[str, float]]:
+    def get_sorted_words(self) -> List[Tuple[str, float]]:
         return sorted(self.importance.items(), key=lambda a: a[1], reverse=True)
 
-    def get_positive_negative_words(self) -> tuple[list[str], list[str]]:
+    def get_positive_negative_words(self) -> Tuple[List[str], List[str]]:
         positive, negative = [], []
         for word, score in self.importance.items():
             if score >= self.threshold:
