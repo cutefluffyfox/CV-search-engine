@@ -1,5 +1,5 @@
 import json
-import threading
+from multiprocessing import Process
 import torch
 from typing import List, Tuple
 
@@ -39,17 +39,17 @@ class Vector:
             return a
         
         sentence = sentence.translate(translator)
-        threads = []
+        processes = []
         if isinstance(model, SentenceTransformer):
             for i in range(8):
-                thread = threading.Thread(target=bert_encode, args=(sentence, i, ))
-                thread.start()
-                threads.append(thread)
+                process = Process(target=bert_encode, args=(sentence, i, ))
+                process.start()
+                processes.append(process)
             
             results = []
 
-            for thread in threads:
-                result = thread.join()
+            for process in processes:
+                result = process.join()
                 results.append(result)
 
             self.cv_vector = results
