@@ -27,16 +27,15 @@ class Vector:
         if do_preprocess:
             self.preprocess()
 
-    @staticmethod
-    def __get_sentence_embedding(sentence: str) -> list or None:
-        global cv
+    # @staticmethod
+    def __get_sentence_embedding(self, sentence: str) -> list | None:
+        #  global cv
         def bert_encode(sentence, tmp):
             global cv
             count = len(sentence)//8
             start = tmp * count
             end = len(sentence) if tmp==7 else (tmp + 1)*count
             a = model.encode([sentence[start:end]])[0] if sentence else None
-            cv = cv + a if len(cv)!=0 else a
             return a
         
         sentence = sentence.translate(translator)
@@ -46,9 +45,14 @@ class Vector:
                 thread = threading.Thread(target=bert_encode, args=(sentence, i, ))
                 thread.start()
                 threads.append(thread)
+            
+            results = []
+
             for thread in threads:
-                thread.join()
-            self.cv_vector = cv
+                result = thread.join()
+                results.append(result)
+
+            self.cv_vector = results
             print(self.cv_vector)
         elif isinstance(model, gensim.models.keyedvectors.KeyedVectors):
             words = sentence.split()
