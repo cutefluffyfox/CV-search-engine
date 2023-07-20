@@ -3,6 +3,7 @@ import json
 import asyncio
 from uuid import uuid4
 
+import PyPDF2
 import requests
 import aiohttp
 
@@ -70,4 +71,19 @@ async def post(url: str):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=json.dumps(payload)) as resp:
             pass
+
+
+def parse_pdf(pdf_path: str) -> str:
+    result = []
+    with open(pdf_path, 'rb') as pdf:
+        pdf = PyPDF2.PdfReader(pdf_path)
+        
+        for page in pdf.pages:
+            result.extend(page.extract_text().split("\n"))
+    
+    result = list(filter(lambda x: x != " ", result))
+    result = list(map(lambda x: x.strip(), result))
+    result = ' '.join(result)
+    
+    return result
 

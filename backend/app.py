@@ -4,7 +4,6 @@ import logging
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import FileResponse
 
 import core
 
@@ -27,10 +26,20 @@ def read_root(request: Request):
 
 
 @app.get("/pdf/{file_name}")
-async def get_pdf(file_name: str):
+def get_pdf(request: Request, file_name: str):
     pdf_path = core.get_full_path(file_name)
-    # pdf_path = PDF_FOLDER_PATH + file_name
-    return FileResponse(pdf_path, filename=file_name, media_type="application/pdf")
+    assert pdf_path
+    
+    content = core.parse_pdf(pdf_path)
+    
+    return templates.TemplateResponse(
+        "pdf.html", 
+        {
+            "request": request,
+            "pdf_file": file_name,
+            "content": content 
+        }
+    )
 
 
 @app.post("/process")
