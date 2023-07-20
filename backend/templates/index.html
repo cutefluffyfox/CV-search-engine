@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Input Field Example</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .container {
+        text-align: center;
+      }
+
+      .input-field {
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Input Field Example</h1>
+      <form action="/process" method="post">
+        <input
+          class="input-field"
+          type="text"
+          name="input"
+          placeholder="Enter your text"
+        />
+        <br />
+        <input type="submit" value="Submit" />
+      </form>
+    </div>
+  </body>
+</html>

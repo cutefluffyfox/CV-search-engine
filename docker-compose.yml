@@ -1,20 +1,23 @@
-version: '2.1'
+version: "2.1"
 
-x-common:
-  &common
+x-common: &common
   build: .
   # image: apache/airflow:2.3.0
-  user: "${AIRFLOW_UID}:0"
-  env_file: 
+  # user: "${AIRFLOW_UID}:0"
+  env_file:
     - .env
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
+    - ./pdf_files:/app/pdf_files
+    - ./aml-dataset:/app/aml-dataset
     - /var/run/docker.sock:/var/run/docker.sock
+  environment:
+    - AIRFLOW__API__AUTH_BACKEND=airflow.api.auth.backend.basic_auth
+    - AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT=300
 
-x-depends-on:
-  &depends-on
+x-depends-on: &depends-on
   depends_on:
     postgres:
       condition: service_healthy
@@ -22,6 +25,27 @@ x-depends-on:
       condition: service_completed_successfully
 
 services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - "rabbitmq_data:/data"
+
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    ports:
+      - 80:80
+
   postgres:
     image: postgres:13
     container_name: postgres
@@ -54,7 +78,14 @@ services:
       interval: 30s
       timeout: 30s
       retries: 5
-  
+
+  backend:
+    build: backend
+    environment:
+      - AIRFLOW_USERNAME=$_AIRFLOW_WWW_USER_USERNAME
+      - AIRFLOW_PASSWORD=$_AIRFLOW_WWW_USER_PASSWORD
+    volumes:
+      - ./aml-dataset:/app/aml-dataset
   airflow-init:
     <<: *common
     container_name: airflow-init
@@ -63,5 +94,9 @@ services:
       - -c
       - |
         mkdir -p /sources/logs /sources/dags /sources/plugins
-        chown -R "${AIRFLOW_UID}:0" /sources/{logs,dags,plugins}
+        chown -R airflow /sources/{logs,dags,plugins}
+        # chown -R "${AIRFLOW_UID}:0" /sources/{logs,dags,plugins}
         exec /entrypoint airflow version
+
+volumes:
+  rabbitmq_data:

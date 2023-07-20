@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PDF Links Example</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .container {
+        text-align: center;
+      }
+
+      .pdf-link {
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>PDF Links Example</h1>
+      <ul>
+        {% for pdf_file in pdf_files %}
+        <li>
+          <a class="pdf-link" href="/pdf/{{ pdf_file["id"] }}" target="_blank"
+            >{{ pdf_file }}</a
+          >
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </body>
+</html>

@@ -1,3 +1,5 @@
+from typing import List
+
 from vectorizer import Vector
 from interpretation import InterpretableVector
 from metrics import cosine_similarity

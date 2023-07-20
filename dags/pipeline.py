@@ -1,8 +1,6 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
 from tasks import *
@@ -14,12 +12,12 @@ with DAG(
 ) as dag:
     preprocessing_task = PythonOperator(
         task_id='preprocessing_task',
-        python_callable=preprocessing
+        python_callable=preprocessing_task_1
     )
 
     nlp_vectorization_task = PythonOperator(
         task_id='nlp_vectorization',
-        python_callable=vectorization
+        python_callable=vectorization,
     )
 
     sorting_task = PythonOperator(
