@@ -52,7 +52,8 @@ async def get_pdf(request: Request, file_name: str, session_id: str):
             "request": request,
             "pdf_file": file_name,
             "content": text.split(),
-            "positive_words": positive_words
+            "positive_words": positive_words,
+            "negative_words": negative_words,
         }
     )
 
