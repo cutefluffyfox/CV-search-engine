@@ -2,10 +2,12 @@ import os
 import json
 import asyncio
 from uuid import uuid4
+from typing import Any
 
+import redis
 import PyPDF2
-import requests
 import aiohttp
+import requests
 
 from rabbitmq import RabbitMQThread
 import rabbitmq
@@ -32,15 +34,8 @@ def callback(ch, method, properties, body, session_id):
     ch.connection.close()
 
 
-async def old_post(url: str, prompt: str):
-    session_id = str(uuid4())
-
-    payload = {
-        "conf": {
-            "session_id": session_id,
-            "prompt": prompt
-        }
-    }
+async def old_post(url: str, payload: dict[str, dict]):
+    session_id = payload["conf"]["session_id"]
 
     requests.post(url, json=payload)
 
@@ -86,4 +81,20 @@ def parse_pdf(pdf_path: str) -> str:
     result = ' '.join(result)
     
     return result
+
+
+def cache_push(key: Any, value: Any) -> None:
+    # Connect to Redis (assuming it's running on localhost and default port)
+    redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+    redis_client.set(key, value)
+
+
+def pull_from_redis(key: Any) -> Any:
+    redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+    
+    value = redis_client.get(key)
+    if value is not None:
+        return value.decode('utf-8')  # Convert from bytes to string if needed
+    else:
+        return None
 

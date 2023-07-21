@@ -1,10 +1,12 @@
 #!/usr/local/bin/python3
 
+from operator import pos
 import pika
 import json
 import logging
 from threading import Thread
 
+from interpretation import InterpretableVector
 from vectorizer import Vector
 from sorter import CVSorter
 
@@ -101,6 +103,7 @@ def sorting(**context):
 
     sorter = CVSorter(prompt_vec, cv_vecs)
     metadata = sorter.get_sorted_metadata()
+    # metadata = sorter.get_full_result()
 
     connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
     channel = connection.channel()
@@ -118,3 +121,49 @@ def sorting(**context):
     connection.close()
 
     # context['ti'].xcom_puch(key='cvs', value=metadata)
+
+
+def interpret_text_callback(**context):
+    text = context['params']['text']
+    prompt = context['params']['prompt']
+
+    print("text: " + str(text))
+    print("prompt: " + str(prompt))
+
+    positive_negative = [None]
+    
+    def thread_funcion(positive_negative: list):
+        interpretable_vector = InterpretableVector(str(text), str(prompt))
+        interpretable_vector.analyze_word_importance()
+        print("importance: " + str(interpretable_vector.importance))
+        positive_negative[0] = interpretable_vector.get_positive_negative_words()
+        print("Positive negative: " + str(positive_negative))
+    
+    thread = Thread(target=thread_funcion, args=(positive_negative,))
+    thread.start()
+    thread.join()
+    positive_negative = positive_negative[0]
+
+    print("Positive_negative: " + str(positive_negative))
+
+    context['ti'].xcom_push(key='positive_negative_task', value=positive_negative)
+
+
+def push_to_rabbit(**context):
+    positive_negative = context['ti'].xcom_pull(key='positive_negative_task')
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
+    channel = connection.channel()
+
+    session_id = context['params']['session_id']
+
+    channel.queue_declare(queue=session_id)
+
+    channel.basic_publish(
+        exchange='',
+        routing_key=session_id,
+        body=json.dumps(positive_negative),
+    )
+
+    connection.close()
+

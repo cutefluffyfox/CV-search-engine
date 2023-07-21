@@ -26,3 +26,7 @@ class CVSorter:
         cvs = self.sort_cvs()
         return [cv.metadata for cv in cvs]
 
+    def get_full_result(self) -> list[tuple[dict, tuple[list[str], list[str]]]]:
+        cvs = self.sort_cvs()
+        return [(cv.metadata, cv.get_positive_negative_words()) for cv in cvs]
+

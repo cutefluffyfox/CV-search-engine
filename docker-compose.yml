@@ -25,6 +25,10 @@ x-depends-on: &depends-on
       condition: service_completed_successfully
 
 services:
+  redis:
+    image: redis
+    container_name: my_redis
+
   rabbitmq:
     image: "rabbitmq:3-management"
     hostname: rabbitmq
