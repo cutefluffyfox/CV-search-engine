@@ -85,12 +85,12 @@ def parse_pdf(pdf_path: str) -> str:
 
 def cache_push(key: Any, value: Any) -> None:
     # Connect to Redis (assuming it's running on localhost and default port)
-    redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+    redis_client = redis.StrictRedis(host='redis', port=6379, db=0)
     redis_client.set(key, value)
 
 
-def pull_from_redis(key: Any) -> Any:
-    redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+def cache_pull(key: Any) -> Any:
+    redis_client = redis.StrictRedis(host='redis', port=6379, db=0)
     
     value = redis_client.get(key)
     if value is not None:

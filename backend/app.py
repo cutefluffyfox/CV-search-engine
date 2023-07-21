@@ -28,13 +28,14 @@ def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-@app.get("/pdf/{prompt}/{file_name}")
-async def get_pdf(request: Request, prompt: str, file_name: str):
+@app.get("/pdf/{file_name}/{session_id}")
+async def get_pdf(request: Request, file_name: str, session_id: str):
     pdf_path = core.get_full_path(file_name)
     assert pdf_path
     
     text = core.parse_pdf(pdf_path)
-    
+    prompt = core.cache_pull(session_id)
+
     session_id = str(uuid4())
     payload = {
         "conf": {
@@ -63,14 +64,23 @@ async def process_input(request: Request):
     prompt = form_data["input"]
 
     session_id = str(uuid4())
+
     payload = {
         "conf": {
             "session_id": session_id,
             "prompt": prompt
         }
     }
-    
     pdf_paths = await core.old_post(FIRST_DAG_URL, payload)
 
-    return templates.TemplateResponse("results.html", {"request": request, "pdf_files": pdf_paths})
+    core.cache_push(session_id, prompt)
+
+    return templates.TemplateResponse(
+        "results.html", 
+        {
+            "request": request, 
+            "pdf_files": pdf_paths,
+            "session_id": session_id
+        }
+    )
 

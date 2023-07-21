@@ -27,7 +27,7 @@
       <ul>
         {% for pdf_file in pdf_files %}
         <li>
-          <a class="pdf-link" href="/pdf/{{ pdf_file["id"] }}" target="_blank"
+          <a class="pdf-link" href="/pdf/{{ pdf_file["id"] }}/{{ session_id }}" target="_blank"
             >{{ pdf_file }}</a
           >
         </li>
