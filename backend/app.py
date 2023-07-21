@@ -44,16 +44,15 @@ async def get_pdf(request: Request, file_name: str, session_id: str):
             "prompt": prompt
         }
     }
-    positive_negative_task = await core.old_post(SECOND_DAG_URL, payload)
-   
-    logger.warning(positive_negative_task)
+    positive_words, negative_words = await core.old_post(SECOND_DAG_URL, payload)
 
     return templates.TemplateResponse(
         "pdf.html", 
         {
             "request": request,
             "pdf_file": file_name,
-            "content": text
+            "content": text.split(),
+            "positive_words": positive_words
         }
     )
 

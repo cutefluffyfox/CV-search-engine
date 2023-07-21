@@ -42,7 +42,7 @@ async def old_post(url: str, payload: dict[str, dict]):
     rabbitmq_thread = RabbitMQThread(session_id, callback)
     rabbitmq_thread.start()
 
-    TIMEOUT = 150
+    TIMEOUT = 600
     PERIOD = 0.1
 
     for i in range(int(TIMEOUT / PERIOD)):

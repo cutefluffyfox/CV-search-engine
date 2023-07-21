@@ -19,13 +19,29 @@
       .pdf-link {
         margin-bottom: 10px;
       }
+
+      .highlight {
+        background-color: green;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>{{ pdf_file }}</h1>
 
-      <div>{{ content }}</div>
+      <div>
+        {% for word in content %} {% if word in positive_words %}
+        <a class="highlight">{{ word }}</a>
+        {% else %}
+        <a>{{ word }}</a>
+        {% endif %} {% endfor %}
+      </div>
+
+      <div>
+        {% for word in positive_words %}
+        <a>{{ word }}</a>
+        {% endfor %}
+      </div>
     </div>
   </body>
 </html>
