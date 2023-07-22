@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI
 from fastapi import Request
+from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 
 import core
@@ -12,9 +13,13 @@ AIRFLOW_USERNAME = os.environ.get("AIRFLOW_USERNAME") or None
 AIRFLOW_PASSWORD = os.environ.get("AIRFLOW_PASSWORD") or None
 
 app = FastAPI()
+
 templates = Jinja2Templates(directory="templates")
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+BEST_PDF_AMOUNT = 10
 
 PDF_FOLDER_PATH = "/home/ilnar/WorkSpace/CV-search-engine/pdf_files/"
 FIRST_DAG_URL = f"http://{AIRFLOW_USERNAME}:{AIRFLOW_PASSWORD}"\
@@ -28,8 +33,19 @@ def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.get("/pdf/{file_name}")
+def download_pdf(file_name: str):
+    pdf_path = core.get_full_path(file_name)
+    assert pdf_path
+    return FileResponse(
+        pdf_path, 
+        filename=file_name, 
+        media_type="application/pdf"
+    )
+
+
 @app.get("/pdf/{file_name}/{session_id}")
-async def get_pdf(request: Request, file_name: str, session_id: str):
+async def render_pdf(request: Request, file_name: str, session_id: str):
     pdf_path = core.get_full_path(file_name)
     assert pdf_path
     
@@ -44,7 +60,10 @@ async def get_pdf(request: Request, file_name: str, session_id: str):
             "prompt": prompt
         }
     }
-    positive_words, negative_words = await core.old_post(SECOND_DAG_URL, payload)
+    positive_words, negative_words = await core.old_post(
+        SECOND_DAG_URL, 
+        payload
+    )
 
     return templates.TemplateResponse(
         "pdf.html", 
@@ -72,6 +91,7 @@ async def process_input(request: Request):
         }
     }
     pdf_paths = await core.old_post(FIRST_DAG_URL, payload)
+    pdf_paths = pdf_paths[:BEST_PDF_AMOUNT]
 
     core.cache_push(session_id, prompt)
 
