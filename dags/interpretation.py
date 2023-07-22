@@ -7,7 +7,7 @@ from metrics import cosine_similarity
 
 
 class InterpretableVector:
-    def __init__(self, text: str or Vector, prompt: str or Vector, threshold: float = 0.9, cache_importance: bool = True, metadata: dict = None):
+    def __init__(self, text: str or Vector, prompt: str or Vector, threshold: float = 0.3, cache_importance: bool = True, metadata: dict = None):
         if isinstance(text, str):
             text = Vector(-1, text, do_preprocess=False)
         if isinstance(prompt, str):
@@ -23,6 +23,7 @@ class InterpretableVector:
     def analyze_word_importance(self) -> Dict[str, float]:
         words, embeddings = self.resume.get_words_embeddings()
         importance = self.importance if self.cache_importance else dict()
+        
         for word, emb in zip(words, embeddings):
             importance[word] = cosine_similarity(self.prompt.cv_vector, emb)
         return importance

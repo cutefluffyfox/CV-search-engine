@@ -2,9 +2,12 @@ import os
 import json
 import asyncio
 from uuid import uuid4
+from typing import Any
 
-import requests
+import redis
+import PyPDF2
 import aiohttp
+import requests
 
 from rabbitmq import RabbitMQThread
 import rabbitmq
@@ -31,22 +34,15 @@ def callback(ch, method, properties, body, session_id):
     ch.connection.close()
 
 
-async def old_post(url: str, prompt: str):
-    session_id = str(uuid4())
-
-    payload = {
-        "conf": {
-            "session_id": session_id,
-            "prompt": prompt
-        }
-    }
+async def old_post(url: str, payload: dict[str, dict]):
+    session_id = payload["conf"]["session_id"]
 
     requests.post(url, json=payload)
 
     rabbitmq_thread = RabbitMQThread(session_id, callback)
     rabbitmq_thread.start()
 
-    TIMEOUT = 150
+    TIMEOUT = 600
     PERIOD = 0.1
 
     for i in range(int(TIMEOUT / PERIOD)):
@@ -70,4 +66,35 @@ async def post(url: str):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=json.dumps(payload)) as resp:
             pass
+
+
+def parse_pdf(pdf_path: str) -> str:
+    result = []
+    with open(pdf_path, 'rb') as pdf:
+        pdf = PyPDF2.PdfReader(pdf_path)
+        
+        for page in pdf.pages:
+            result.extend(page.extract_text().split("\n"))
+    
+    result = list(filter(lambda x: x != " ", result))
+    result = list(map(lambda x: x.strip(), result))
+    result = ' '.join(result)
+    
+    return result
+
+
+def cache_push(key: Any, value: Any) -> None:
+    # Connect to Redis (assuming it's running on localhost and default port)
+    redis_client = redis.StrictRedis(host='redis', port=6379, db=0)
+    redis_client.set(key, value)
+
+
+def cache_pull(key: Any) -> Any:
+    redis_client = redis.StrictRedis(host='redis', port=6379, db=0)
+    
+    value = redis_client.get(key)
+    if value is not None:
+        return value.decode('utf-8')  # Convert from bytes to string if needed
+    else:
+        return None
 

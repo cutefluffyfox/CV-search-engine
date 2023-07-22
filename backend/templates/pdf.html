@@ -12,8 +12,20 @@
         justify-content: center;
       }
 
+      .container {
+        text-align: center;
+      }
+
       .pdf-link {
         margin-bottom: 10px;
+      }
+
+      .positive_highlight {
+        background-color: #b3ffae;
+      }
+
+      .negative_highlight {
+        background-color: #ff7d7d;
       }
 
       /* devanagari */
@@ -87,25 +99,26 @@
           U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
 
-      .container {
-        text-align: center;
+      .texted {
         font-family: "Poppins", sans-serif;
       }
-
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>PDF Links Example</h1>
-      <ul>
-        {% for pdf_file in pdf_files %}
-        <li>
-          <a class="pdf-link" href="/pdf/{{ pdf_file["id"] }}/{{ session_id }}" target="_blank">
-            {{ pdf_file["id"] }}: {{ pdf_file["score"] }}
-          </a>
-        </li>
-        {% endfor %}
-      </ul>
+      <h1 class="texted">
+        <a href="/pdf/{{ pdf_file }}"> {{ pdf_file }} </a>
+      </h1>
+
+      <div id="texted">
+        {% for word in content %} {% if word in positive_words %}
+        <a class="positive_highlight">{{ word }}</a>
+        {% elif word in negative_words %}
+        <a class="negative_highlight">{{ word }}</a>
+        {% else %}
+        <a>{{ word }}</a>
+        {% endif %} {% endfor %}
+      </div>
     </div>
   </body>
 </html>
